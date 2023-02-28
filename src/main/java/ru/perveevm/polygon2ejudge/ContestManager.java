@@ -241,22 +241,22 @@ public class ContestManager {
                     throw new ContestManagerException("some groups are not continuous");
                 }
 
-                valuer.append(String.format("group %s {%n", group.getName()));
+                valuer.append(String.format("group %s {", group.getName())).append(System.lineSeparator());
 
-                valuer.append(String.format("\ttests %d-%d;%n", first + 1, last + 1));
-                valuer.append(String.format("\tscore %d;%n", score));
-                valuer.append(String.format("\trequires %s;%n", dependencies));
+                valuer.append(String.format("\ttests %d-%d;", first + 1, last + 1)).append(System.lineSeparator());
+                valuer.append(String.format("\tscore %d;", score)).append(System.lineSeparator());
+                valuer.append(String.format("\trequires %s;", dependencies)).append(System.lineSeparator());
                 if (group.getFeedbackPolicy() == TestGroupFeedbackPolicy.COMPLETE
                         || group.getPointsPolicy() == TestGroupPointsPolicy.EACH_TEST) {
-                    valuer.append("\ttest_all;%n");
+                    valuer.append("\ttest_all;").append(System.lineSeparator());
                 }
                 if (group.getPointsPolicy() == TestGroupPointsPolicy.EACH_TEST) {
                     if (minScore != maxScore) {
                         throw new ContestManagerException("group with EACH_TEST policy has tests with different scores");
                     }
-                    valuer.append(String.format("\ttest_score %d;%n", minScore));
+                    valuer.append(String.format("\ttest_score %d;", minScore)).append(System.lineSeparator());
                 }
-                valuer.append("}%n");
+                valuer.append("}").append(System.lineSeparator());
             }
 
             config.put("open_tests", openTests.toString());
