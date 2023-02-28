@@ -5,8 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ru.perveevm</groupId>
-    <artifactId>polygon2ejudge-v2</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <artifactId>polygon2ejudge</artifactId>
+    <version>1.0</version>
 
     <repositories>
         <repository>
@@ -62,4 +62,22 @@
             <version>4.7.1</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>ru.perveevm.polygon2ejudge.Main</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
