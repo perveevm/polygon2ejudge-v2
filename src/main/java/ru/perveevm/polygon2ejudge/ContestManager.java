@@ -269,6 +269,8 @@ public class ContestManager {
             config.put("interactor_cmd", "\"" + removeExtension(fileNames.get(2)) + "\"");
         }
         config.put("enable_testlib_mode", "");
+        config.put("enable_text_form", "");
+        config.put("enable_user_input", "");
 
         StringBuilder configString = new StringBuilder();
         configString.append("[problem]").append(System.lineSeparator());
