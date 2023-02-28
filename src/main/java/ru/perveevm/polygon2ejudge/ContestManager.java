@@ -112,6 +112,10 @@ public class ContestManager {
         return names;
     }
 
+    private String removeExtension(final String name) {
+        return name.substring(0, name.lastIndexOf('.'));
+    }
+
     private String generateProblemConfig(final ProblemInfo problemInfo, final Problem problem,
                                          final int ejudgeProblemId, final String problemShortName,
                                          final List<String> fileNames, final Path problemDirectory)
@@ -259,10 +263,10 @@ public class ContestManager {
                 throw new ContestManagerException("failed to write valuer.cfg");
             }
         }
-        config.put("check_cmd", "\"" + fileNames.get(0) + "\"");
-        config.put("solution_cmd", "\"" + fileNames.get(1) + "\"");
+        config.put("check_cmd", "\"" + removeExtension(fileNames.get(0)) + "\"");
+        config.put("solution_cmd", "\"" + removeExtension(fileNames.get(1)) + "\"");
         if (fileNames.size() == 3) {
-            config.put("interactor_cmd", "\"" + fileNames.get(2) + "\"");
+            config.put("interactor_cmd", "\"" + removeExtension(fileNames.get(2)) + "\"");
         }
         config.put("enable_testlib_mode", "");
 
