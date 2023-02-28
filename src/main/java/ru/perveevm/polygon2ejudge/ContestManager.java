@@ -268,6 +268,7 @@ public class ContestManager {
                 throw new ContestManagerException("failed to copy gvaluer", e);
             }
             config.put("valuer_cmd", "gvaluer");
+            config.put("interactive_valuer", "");
 
             try (BufferedWriter writer = Files.newBufferedWriter(problemDirectory.resolve("valuer.cfg"))) {
                 writer.write(valuer.toString());
