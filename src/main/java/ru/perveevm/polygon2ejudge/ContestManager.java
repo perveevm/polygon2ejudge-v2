@@ -260,7 +260,12 @@ public class ContestManager {
             }
 
             config.put("open_tests", openTests.toString());
-            config.put("valuer_cmd", gvaluerPath.toString());
+            try {
+                Files.copy(gvaluerPath, problemDirectory.resolve("gvaluer"));
+            } catch (IOException e) {
+                throw new ContestManagerException("failed to copy gvaluer", e);
+            }
+            config.put("valuer_cmd", "gvaluer");
 
             try (BufferedWriter writer = Files.newBufferedWriter(problemDirectory.resolve("valuer.cfg"))) {
                 writer.write(valuer.toString());
