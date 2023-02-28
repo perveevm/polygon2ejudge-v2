@@ -37,6 +37,8 @@ public class ContestManager {
     private final Path contestsDir;
     private final String statementsLang;
     private final Path statementsDir;
+    private final Path gvaluerPath;
+    private final String statementsUrlPrefix;
 
     public ContestManager() throws ContestManagerException {
         try (InputStream in = ContestManager.class.getClassLoader().getResourceAsStream("logging.properties")) {
@@ -57,6 +59,8 @@ public class ContestManager {
             contestsDir = Path.of(properties.getProperty("ejudge.contestsDir"));
             statementsLang = properties.getProperty("ejudge.statementsLang");
             statementsDir = Path.of(properties.getProperty("ejudge.statementsDir"));
+            gvaluerPath = Path.of(properties.getProperty("ejudge.gvaluerPath"));
+            statementsUrlPrefix = properties.getProperty("ejudge.statementsUrlPrefix");
         } catch (IOException e) {
             throw new ContestManagerException("failed to load properties", e);
         }
@@ -256,6 +260,7 @@ public class ContestManager {
             }
 
             config.put("open_tests", openTests.toString());
+            config.put("valuer_cmd", gvaluerPath.toString());
 
             try (BufferedWriter writer = Files.newBufferedWriter(problemDirectory.resolve("valuer.cfg"))) {
                 writer.write(valuer.toString());
@@ -286,15 +291,10 @@ public class ContestManager {
         return configString.toString();
     }
 
-    private void generateStatement(final Path tmpDir, final Problem problem, final Path problemDirectory)
+    private void generateStatement(final Path tmpDir, final Problem problem, final Path problemDirectory,
+                                   final String statementsUrl)
             throws PolygonSessionException, IOException {
         Map<String, Statement> statements = session.problemStatements(problem.getId());
-        String title = "Undefined";
-        if (statements.containsKey(statementsLang)) {
-            title = statements.get(statementsLang).getName();
-        } else {
-            log.warning(String.format("There is no statements in %s", statementsLang));
-        }
 
         log.info("Generating statement...");
         Path statementPath = tmpDir.resolve("statements").resolve(".html").resolve(statementsLang).resolve("problem.html");
@@ -315,13 +315,13 @@ public class ContestManager {
                 <?xml version="1.0" encoding="utf-8" ?>
                 <problem>
                 <statement language="ru_RU">
-                <title><div class="title">%s</div></title>
                 <description>
+                <p><a href = "%s">[Условия всех задач в pdf]</a></p>
                 %s
                 </description>
                 </statement>
                 </problem>
-                """, title, content);
+                """, statementsUrl, content);
 
         try (BufferedWriter writer = Files.newBufferedWriter(problemDirectory.resolve("statement.xml"),
                 StandardCharsets.UTF_8)) {
@@ -330,7 +330,7 @@ public class ContestManager {
     }
 
     private String importProblem(final Problem problem, final int ejudgeContestId, final int ejudgeProblemId,
-                                 final String problemShortName)
+                                 final String problemShortName, final String statementsUrl)
             throws PolygonSessionException, IOException, ContestManagerException {
         Path contestDirectory = contestsDir.resolve(String.format("%06d", ejudgeContestId));
         Path problemDirectory = contestDirectory.resolve("problems").resolve(problem.getName());
@@ -361,7 +361,7 @@ public class ContestManager {
         List<String> fileNames = moveFiles(tmpDir, problemDirectory, problem, problemInfo);
         String configString = generateProblemConfig(problemInfo, problem, ejudgeProblemId, problemShortName, fileNames,
                 problemDirectory);
-        generateStatement(tmpDir, problem, problemDirectory);
+        generateStatement(tmpDir, problem, problemDirectory, statementsUrl);
 
         log.info("Cleaning up...");
         FileUtils.deleteDirectory(tmpDir.toFile());
@@ -372,6 +372,10 @@ public class ContestManager {
     public void importContest(final int polygonContestId, final int ejudgeContestId) throws ContestManagerException {
         Path contestDirectory = contestsDir.resolve(String.format("%06d", ejudgeContestId));
         log.info(String.format("Importing contest %d to %s", polygonContestId, contestDirectory));
+
+        Random random = new Random(ejudgeContestId);
+        String statementsFile = "contest-" + ejudgeContestId + "-" +
+                RandomStringUtils.random(8, 'a', 'z', true, false, null, random) + ".pdf";
 
         Map<String, Problem> problems;
         try {
@@ -413,7 +417,8 @@ public class ContestManager {
             problemId++;
 
             try {
-                String problemConfig = importProblem(problem, ejudgeContestId, problemId, shortName);
+                String problemConfig = importProblem(problem, ejudgeContestId, problemId, shortName,
+                        statementsUrlPrefix + "/" + statementsFile);
                 parser.getProblems().add(problemConfig);
             } catch (PolygonSessionException | IOException e) {
                 log.warning(String.format("Failed to load problem %s (%s)", problem.getName(), e.getMessage()));
@@ -437,9 +442,6 @@ public class ContestManager {
             throw new ContestManagerException("failed to write serve.cfg file", e);
         }
 
-        Random random = new Random(ejudgeContestId);
-        String statementsFile = "contest-" + ejudgeContestId + "-" +
-                RandomStringUtils.random(8, 'a', 'z', true, false, null, random) + ".pdf";
         if (Files.exists(statementsDir.resolve(statementsFile))) {
             try {
                 Files.delete(statementsDir.resolve(statementsFile));
