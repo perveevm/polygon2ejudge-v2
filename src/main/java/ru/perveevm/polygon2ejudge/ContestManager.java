@@ -317,7 +317,7 @@ public class ContestManager {
                     .forEach(p -> {
                         try {
                             Files.copy(tmpDir.resolve("statements").resolve(".html").resolve(statementsLang).resolve(p),
-                                    problemDirectory);
+                                    problemDirectory.resolve(p));
                         } catch (IOException e) {
                             log.warning(String.format("Could not copy statement resource %s", p));
                         }
@@ -331,11 +331,11 @@ public class ContestManager {
             if (!legendElements.isEmpty()) {
                 Element legendElement = legendElements.get(0);
                 legendElement.select(".header").remove();
-                content = legendElement.toString().replace("$$$$$$", "$$").replace("$$$", "$");
                 legendElement.select("img").forEach(element -> {
                     String src = element.attr("src");
                     element.attr("src", "${getfile}=" + src);
                 });
+                content = legendElement.toString().replace("$$$$$$", "$$").replace("$$$", "$");
             }
         } else {
             log.warning(String.format("There is no statements in %s", statementsLang));
