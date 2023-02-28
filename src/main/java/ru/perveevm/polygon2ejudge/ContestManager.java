@@ -308,7 +308,22 @@ public class ContestManager {
         Map<String, Statement> statements = session.problemStatements(problem.getId());
 
         log.info("Generating statement...");
+        log.info("Copying statement resources...");
         Path statementPath = tmpDir.resolve("statements").resolve(".html").resolve(statementsLang).resolve("problem.html");
+        try (Stream<Path> files = Files.list(tmpDir.resolve("statements").resolve(".html").resolve(statementsLang))) {
+            files.map(Path::getFileName)
+                    .map(Path::toString)
+                    .filter(p -> !p.endsWith(".html") && !p.endsWith(".css"))
+                    .forEach(p -> {
+                        try {
+                            Files.copy(tmpDir.resolve("statements").resolve(".html").resolve(statementsLang).resolve(p),
+                                    problemDirectory);
+                        } catch (IOException e) {
+                            log.warning(String.format("Could not copy statement resource %s", p));
+                        }
+                    });
+        }
+
         String content = "No statement available";
         if (Files.exists(statementPath)) {
             Document document = Jsoup.parse(statementPath.toFile());
@@ -317,6 +332,10 @@ public class ContestManager {
                 Element legendElement = legendElements.get(0);
                 legendElement.select(".header").remove();
                 content = legendElement.toString().replace("$$$$$$", "$$").replace("$$$", "$");
+                legendElement.select("img").forEach(element -> {
+                    String src = element.attr("src");
+                    element.attr("src", "${getfile}=" + src);
+                });
             }
         } else {
             log.warning(String.format("There is no statements in %s", statementsLang));
