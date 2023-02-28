@@ -26,7 +26,7 @@ public class EjudgeSession {
     private final String password;
     private final String cgiBinUrl;
 
-    private final CloseableHttpClient client = HttpClients.createDefault();
+    private CloseableHttpClient client = HttpClients.createDefault();
 
     private String sid;
 
@@ -51,6 +51,7 @@ public class EjudgeSession {
     }
 
     private void authenticate(final int contestId) throws IOException, URISyntaxException, EjudgeSessionException {
+        client = HttpClients.createDefault();
         HttpPost request = new HttpPost(cgiBinUrl + "/new-master");
         List<NameValuePair> parameters = List.of(
                 new BasicNameValuePair("action_2", "Submit"),
@@ -70,6 +71,7 @@ public class EjudgeSession {
                 for (NameValuePair pair : responseParameters) {
                     if (pair.getName().equals("SID")) {
                         sid = pair.getValue();
+                        return;
                     }
                 }
             }
@@ -80,12 +82,10 @@ public class EjudgeSession {
 
     public void submitSolution(final int contestId, final String source, final int problemId, final String extension)
             throws EjudgeSessionException {
-        if (sid == null) {
-            try {
-                authenticate(contestId);
-            } catch (IOException | URISyntaxException e) {
-                throw new EjudgeSessionException("failed to authenticate", e);
-            }
+        try {
+            authenticate(contestId);
+        } catch (IOException | URISyntaxException e) {
+            throw new EjudgeSessionException("failed to authenticate", e);
         }
 
         Integer langId = extensionToLangId.getOrDefault(extension, null);
