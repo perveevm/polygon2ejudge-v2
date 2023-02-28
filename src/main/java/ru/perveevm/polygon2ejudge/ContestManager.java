@@ -27,7 +27,6 @@ import java.util.*;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ContestManager {
     private final Logger log;
@@ -67,7 +66,7 @@ public class ContestManager {
     }
 
     private List<String> moveFiles(final Path tmpDir, final Path problemDirectory, final Problem problem,
-                           final ProblemInfo problemInfo)
+                                   final ProblemInfo problemInfo)
             throws IOException, PolygonSessionException, ContestManagerException {
         List<String> names = new ArrayList<>();
 

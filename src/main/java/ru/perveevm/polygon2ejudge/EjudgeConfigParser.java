@@ -10,7 +10,7 @@ import java.util.List;
 
 public class EjudgeConfigParser {
     private String prefix;
-    private List<String> problems = new ArrayList<>();
+    private final List<String> problems = new ArrayList<>();
 
     public EjudgeConfigParser() {
     }
