@@ -6,6 +6,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 import ru.perveevm.polygon.api.PolygonSession;
 import ru.perveevm.polygon.api.entities.*;
@@ -327,7 +328,8 @@ public class ContestManager {
 
         String content = "No statement available";
         if (Files.exists(statementPath)) {
-            Document document = Jsoup.parse(statementPath.toFile());
+            Document document = Jsoup.parse(statementPath.toFile(), null, "", Parser.xmlParser());
+            document = document.normalise();
             Elements legendElements = document.getElementsByClass("problem-statement");
             if (!legendElements.isEmpty()) {
                 Element legendElement = legendElements.get(0);
