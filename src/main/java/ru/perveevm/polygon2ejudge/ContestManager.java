@@ -544,7 +544,8 @@ public class ContestManager {
                                 try {
                                     ejudgeSession.submitSolution(ejudgeContestId, source, problemId, parts[1]);
                                 } catch (EjudgeSessionException e) {
-                                    log.warning("Could not read solution file");
+                                    log.warning(String.format("Could not read solution file %s",
+                                            String.join(".", parts)));
                                 }
                             });
                 } catch (IOException e) {
