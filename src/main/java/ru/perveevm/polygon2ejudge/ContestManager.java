@@ -310,6 +310,7 @@ public class ContestManager {
         log.info("Generating statement...");
         log.info("Copying statement resources...");
         Path statementPath = tmpDir.resolve("statements").resolve(".html").resolve(statementsLang).resolve("problem.html");
+        Files.createDirectory(problemDirectory.resolve("attachments"));
         try (Stream<Path> files = Files.list(tmpDir.resolve("statements").resolve(".html").resolve(statementsLang))) {
             files.map(Path::getFileName)
                     .map(Path::toString)
@@ -317,7 +318,7 @@ public class ContestManager {
                     .forEach(p -> {
                         try {
                             Files.copy(tmpDir.resolve("statements").resolve(".html").resolve(statementsLang).resolve(p),
-                                    problemDirectory.resolve(p));
+                                    problemDirectory.resolve("attachments").resolve(p));
                         } catch (IOException e) {
                             log.warning(String.format("Could not copy statement resource %s", p));
                         }
