@@ -245,7 +245,9 @@ public class ContestManager {
 
                 valuer.append(String.format("\ttests %d-%d;", first + 1, last + 1)).append(System.lineSeparator());
                 valuer.append(String.format("\tscore %d;", score)).append(System.lineSeparator());
-                valuer.append(String.format("\trequires %s;", dependencies)).append(System.lineSeparator());
+                if (group.getDependencies() != null && group.getDependencies().length > 0) {
+                    valuer.append(String.format("\trequires %s;", dependencies)).append(System.lineSeparator());
+                }
                 if (group.getFeedbackPolicy() == TestGroupFeedbackPolicy.COMPLETE
                         || group.getPointsPolicy() == TestGroupPointsPolicy.EACH_TEST) {
                     valuer.append("\ttest_all;").append(System.lineSeparator());
