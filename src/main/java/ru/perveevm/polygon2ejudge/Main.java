@@ -1,11 +1,11 @@
 package ru.perveevm.polygon2ejudge;
 
-public class Main {
-    public static void main(String[] args) throws Exception {
-        int polygonId = Integer.parseInt(args[0]);
-        int ejudgeId = Integer.parseInt(args[1]);
+import picocli.CommandLine;
+import ru.perveevm.polygon2ejudge.cli.Commands;
 
-        ContestManager manager = new ContestManager();
-        manager.importContest(polygonId, ejudgeId);
+public class Main {
+    public static void main(String[] args) {
+        int rc = new CommandLine(new Commands()).execute(args);
+        System.exit(rc);
     }
 }
