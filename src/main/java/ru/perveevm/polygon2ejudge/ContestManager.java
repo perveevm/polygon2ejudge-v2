@@ -218,13 +218,15 @@ public class ContestManager {
                     case COMPLETE -> openTests.append(String.format("%d-%d:full", first + 1, last + 1));
                 }
 
-                Stream<Integer> pointsStream = groupTests.get(group.getName()).stream()
-                        .map(t -> tests[t])
-                        .map(ProblemTest::getPoints)
-                        .map(Double::intValue);
-                int score = pointsStream.reduce(0, Integer::sum);
-                int minScore = pointsStream.reduce(Integer.MAX_VALUE, Math::min);
-                int maxScore = pointsStream.reduce(Integer.MIN_VALUE, Math::max);
+                int score = 0;
+                int minScore = Integer.MAX_VALUE;
+                int maxScore = Integer.MIN_VALUE;
+                for (int testId : groupTests.get(group.getName())) {
+                    int currentScore = tests[testId].getPoints().intValue();
+                    score += currentScore;
+                    minScore = Math.min(minScore, currentScore);
+                    maxScore = Math.max(maxScore, currentScore);
+                }
                 String dependencies = String.join(",", group.getDependencies());
 
                 if (last - first + 1 != groupTests.get(group.getName()).size()) {
