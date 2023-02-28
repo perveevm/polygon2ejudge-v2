@@ -16,7 +16,10 @@ import ru.perveevm.polygon.api.entities.enums.TestGroupPointsPolicy;
 import ru.perveevm.polygon.exceptions.api.PolygonSessionException;
 import ru.perveevm.polygon.exceptions.user.PolygonUserSessionException;
 import ru.perveevm.polygon.user.PolygonUserSession;
+import ru.perveevm.polygon2ejudge.exceptions.ContestManagerException;
+import ru.perveevm.polygon2ejudge.exceptions.EjudgeSessionException;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +30,7 @@ import java.util.*;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ContestManager {
     private final Logger log;
@@ -493,6 +497,63 @@ public class ContestManager {
             writer.write(parser.toString());
         } catch (IOException e) {
             throw new ContestManagerException("failed to write serve.cfg", e);
+        }
+    }
+
+    public void submitContest(final int ejudgeContestId) throws EjudgeSessionException, ContestManagerException {
+        EjudgeSession ejudgeSession = new EjudgeSession();
+        Path contestDirectory = contestsDir.resolve(String.format("%06d", ejudgeContestId));
+        log.info(String.format("Submitting all runs from %s", contestDirectory));
+
+        EjudgeConfigParser parser = new EjudgeConfigParser();
+        try {
+            parser.parse(contestDirectory.resolve("conf").resolve("serve.cfg"));
+        } catch (IOException e) {
+            throw new ContestManagerException("failed to parse serve.cfg", e);
+        }
+
+        Path problemsDirectory = contestDirectory.resolve("problems");
+        try (Stream<Path> stream = Files.list(problemsDirectory)) {
+            stream.forEach(problemPath -> {
+                Path solutionsPath = problemPath.resolve("solutions");
+                try (Stream<Path> solutionsStream = Files.list(solutionsPath)) {
+                    solutionsStream
+                            .map(Path::getFileName)
+                            .map(Path::toString)
+                            .map(filename -> filename.split("\\."))
+                            .filter(parts -> parts.length == 2)
+                            .forEach(parts -> {
+                                String source;
+                                Path solutionPath = solutionsPath.resolve(String.join(".", parts));
+                                try (BufferedReader reader = Files.newBufferedReader(solutionPath, StandardCharsets.UTF_8)) {
+                                    source = reader.lines().collect(Collectors.joining(System.lineSeparator()));
+                                } catch (IOException e) {
+                                    log.warning("Could not read solution file");
+                                    return;
+                                }
+
+                                int problemId;
+                                try {
+                                    problemId = parser.getProblemIdByInternalName(problemPath.getFileName().toString());
+                                } catch (ContestManagerException e) {
+                                    log.warning(String.format("Could not find problem id for problem %s",
+                                            problemPath.getFileName().toString()));
+                                    return;
+                                }
+
+                                try {
+                                    ejudgeSession.submitSolution(ejudgeContestId, source, problemId, parts[1]);
+                                } catch (EjudgeSessionException e) {
+                                    log.warning("Could not read solution file");
+                                }
+                            });
+                } catch (IOException e) {
+                    log.warning(String.format("Failed to iterate over solutions of problem %s",
+                            problemPath.getFileName()));
+                }
+            });
+        } catch (IOException e) {
+            throw new EjudgeSessionException("failed to iterate the problems", e);
         }
     }
 }

@@ -1,5 +1,7 @@
 package ru.perveevm.polygon2ejudge;
 
+import ru.perveevm.polygon2ejudge.exceptions.ContestManagerException;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -56,6 +58,28 @@ public class EjudgeConfigParser {
 
     public List<String> getProblems() {
         return problems;
+    }
+
+    public int getProblemIdByInternalName(final String internalName) throws ContestManagerException {
+        for (String problemConfig : problems) {
+            String[] lines = problemConfig.split(System.lineSeparator());
+            int currentId = -1;
+            String currentName = null;
+            for (String line : lines) {
+                if (line.strip().startsWith("internal_name")) {
+                    currentName = line.substring(line.indexOf("\"") + 1, line.lastIndexOf("\""));
+                }
+                if (line.strip().startsWith("id")) {
+                    currentId = Integer.parseInt(line.substring(line.indexOf("=") + 1).strip());
+                }
+            }
+
+            if (internalName.equals(currentName)) {
+                return currentId;
+            }
+        }
+
+        throw new ContestManagerException(String.format("problem id not found for problem %s", internalName));
     }
 
     @Override

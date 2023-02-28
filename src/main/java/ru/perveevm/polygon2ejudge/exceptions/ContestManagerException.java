@@ -1,4 +1,4 @@
-package ru.perveevm.polygon2ejudge;
+package ru.perveevm.polygon2ejudge.exceptions;
 
 public class ContestManagerException extends Exception {
     public ContestManagerException(final String message) {
