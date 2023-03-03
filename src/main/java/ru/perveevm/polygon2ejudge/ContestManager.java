@@ -342,34 +342,6 @@ public class ContestManager {
                     element.attr("src", "${getfile}=" + src);
                 });
 
-                List<Integer> targetIds = new ArrayList<>();
-                Random random = new Random();
-                Consumer<Element> addButton = element -> {
-                    int currentId = random.nextInt(1000000000);
-                    int targetId = random.nextInt(1000000000);
-                    element.append("<div title=\"Скопировать\" " +
-                            String.format("data-clipboard-target=\"#%d\" ", targetId) +
-                            String.format("id=\"%d\" ", currentId) +
-                            "class=\"input-output-copier\">Скопировать</div>");
-                    targetIds.add(targetId);
-                };
-                Consumer<Element> fixPre = element -> {
-                    int currentId = targetIds.get(targetIds.size() - 1);
-                    targetIds.remove(targetIds.size() - 1);
-                    element.attr("id", String.valueOf(currentId));
-                };
-
-                Elements inputElements = legendElement.select(".input");
-                Elements outputElements = legendElement.select(".output");
-
-                inputElements.select(".title").forEach(addButton);
-                Collections.reverse(targetIds);
-                inputElements.select("pre").forEach(fixPre);
-
-                outputElements.select(".title").forEach(addButton);
-                Collections.reverse(targetIds);
-                outputElements.select("pre").forEach(fixPre);
-
                 content = legendElement.toString().replace("$$$$$$", "$$").replace("$$$", "$");
             }
         } else {
