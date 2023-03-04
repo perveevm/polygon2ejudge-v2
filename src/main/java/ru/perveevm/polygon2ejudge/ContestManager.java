@@ -8,6 +8,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Entities;
 import org.jsoup.select.Elements;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import ru.perveevm.polygon.api.PolygonSession;
 import ru.perveevm.polygon.api.entities.*;
@@ -137,19 +139,23 @@ public class ContestManager {
         org.w3c.dom.Document document = builder.parse(configPath.toFile());
         document.getDocumentElement().normalize();
 
-        Element testsElement = (Element) document.getElementsByTagName("tests").item(0);
-        return testsElement.getElementsByTag("test").stream()
-                .map(testElement -> {
-                    TestInformation test = new TestInformation();
-                    if (testElement.hasAttr("points")) {
-                        test.setPoints(Double.parseDouble(testElement.attr("points")));
-                    }
-                    if (testElement.hasAttr("group")) {
-                        test.setGroup(testElement.attr("group"));
-                    }
-                    test.setUseInSamples(testElement.hasAttr("sample") && testElement.attr("sample").equals("true"));
-                    return test;
-                }).collect(Collectors.toList());
+        org.w3c.dom.Element testsElement = (org.w3c.dom.Element) document.getElementsByTagName("tests").item(0);
+        List<TestInformation> tests = new ArrayList<>();
+        NodeList allTestsElement = testsElement.getElementsByTagName("tests");
+        for (int i = 0; i < allTestsElement.getLength(); i++) {
+            org.w3c.dom.Element testElement = (org.w3c.dom.Element) allTestsElement.item(i);
+            TestInformation test = new TestInformation();
+            if (testElement.hasAttribute("points")) {
+                test.setPoints(Double.parseDouble(testElement.getAttribute("points")));
+            }
+            if (testElement.hasAttribute("group")) {
+                test.setGroup(testElement.getAttribute("group"));
+            }
+            test.setUseInSamples(testElement.hasAttribute("sample") &&
+                    testElement.getAttribute("sample").equals("true"));
+            tests.add(test);
+        }
+        return tests;
     }
 
     private String generateProblemConfig(final ProblemInfo problemInfo, final Problem problem,
