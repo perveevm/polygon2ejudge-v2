@@ -7,8 +7,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Entities;
-import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
+import org.xml.sax.SAXException;
 import ru.perveevm.polygon.api.PolygonSession;
 import ru.perveevm.polygon.api.entities.*;
 import ru.perveevm.polygon.api.entities.enums.PackageState;
@@ -21,6 +21,9 @@ import ru.perveevm.polygon.user.PolygonUserSession;
 import ru.perveevm.polygon2ejudge.exceptions.ContestManagerException;
 import ru.perveevm.polygon2ejudge.exceptions.EjudgeSessionException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -126,18 +129,47 @@ public class ContestManager {
         return name.substring(0, name.lastIndexOf('.'));
     }
 
+    private List<TestInformation> getTests(final Path tmpDirectory)
+            throws ParserConfigurationException, IOException, SAXException {
+        Path configPath = tmpDirectory.resolve("problem.xml");
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        org.w3c.dom.Document document = builder.parse(configPath.toFile());
+        document.getDocumentElement().normalize();
+
+        Element testsElement = (Element) document.getElementsByTagName("tests").item(0);
+        return testsElement.getElementsByTag("test").stream()
+                .map(testElement -> {
+                    TestInformation test = new TestInformation();
+                    if (testElement.hasAttr("points")) {
+                        test.setPoints(Double.parseDouble(testElement.attr("points")));
+                    }
+                    if (testElement.hasAttr("group")) {
+                        test.setGroup(testElement.attr("group"));
+                    }
+                    test.setUseInSamples(testElement.hasAttr("sample") && testElement.attr("sample").equals("true"));
+                    return test;
+                }).collect(Collectors.toList());
+    }
+
     private String generateProblemConfig(final ProblemInfo problemInfo, final Problem problem,
                                          final int ejudgeProblemId, final String problemShortName,
                                          final List<String> fileNames, final Path problemDirectory)
             throws PolygonSessionException, ContestManagerException {
         int timeLimit = problemInfo.getTimeLimit();
         int memoryLimit = problemInfo.getMemoryLimit();
-        ProblemTest[] tests = session.problemTests(problem.getId(), "tests");
+        List<TestInformation> tests;
+        try {
+            tests = getTests(problemDirectory.resolve("tmp"));
+        } catch (ParserConfigurationException | IOException | SAXException e) {
+            throw new ContestManagerException("could not parse problem.xml");
+        }
+
         Map<String, Statement> statements = session.problemStatements(problem.getId());
         boolean pointsEnabled = false;
         boolean groupsEnabled = false;
         int totalScore = 0;
-        for (ProblemTest test : tests) {
+        for (TestInformation test : tests) {
             if (test.getPoints() != null) {
                 pointsEnabled = true;
                 totalScore += test.getPoints();
@@ -176,7 +208,7 @@ public class ContestManager {
         config.put("max_stack_size", memoryLimit + "M");
         if (pointsEnabled) {
             int lastSample = 0;
-            for (ProblemTest test : tests) {
+            for (TestInformation test : tests) {
                 if (test.getUseInStatements()) {
                     lastSample++;
                 } else {
@@ -186,28 +218,28 @@ public class ContestManager {
             config.put("full_score", String.valueOf(totalScore));
             config.put("full_user_score", String.valueOf(totalScore));
             config.put("run_penalty", "0");
-            config.put("test_score_list", Arrays.stream(tests)
-                    .map(ProblemTest::getPoints)
+            config.put("test_score_list", tests.stream()
+                    .map(TestInformation::getPoints)
                     .map(Double::intValue)
                     .map(String::valueOf)
                     .collect(Collectors.joining(" ", "\"", "\"")));
             if (lastSample == 0) {
-                config.put("open_tests", String.format("\"1-%d:brief\"", tests.length));
+                config.put("open_tests", String.format("\"1-%d:brief\"", tests.size()));
             } else {
                 config.put("open_tests",
-                        String.format("\"1-%d:full,%d-%d:brief\"", lastSample, lastSample + 1, tests.length));
+                        String.format("\"1-%d:full,%d-%d:brief\"", lastSample, lastSample + 1, tests.size()));
             }
-            config.put("final_open_tests", String.format("\"1-%d:full\"", tests.length));
+            config.put("final_open_tests", String.format("\"1-%d:full\"", tests.size()));
         }
         if (groupsEnabled) {
             log.info("Generating valuer.cfg...");
             TestGroup[] groups = session.problemViewTestGroup(problem.getId(), "tests", null);
             Map<String, List<Integer>> groupTests = new HashMap<>();
-            for (int i = 0; i < tests.length; i++) {
-                if (!groupTests.containsKey(tests[i].getGroup())) {
-                    groupTests.put(tests[i].getGroup(), new ArrayList<>());
+            for (int i = 0; i < tests.size(); i++) {
+                if (!groupTests.containsKey(tests.get(i).getGroup())) {
+                    groupTests.put(tests.get(i).getGroup(), new ArrayList<>());
                 }
-                groupTests.get(tests[i].getGroup()).add(i);
+                groupTests.get(tests.get(i).getGroup()).add(i);
             }
 
             StringBuilder openTests = new StringBuilder();
@@ -236,7 +268,7 @@ public class ContestManager {
                 int minScore = Integer.MAX_VALUE;
                 int maxScore = Integer.MIN_VALUE;
                 for (int testId : groupTests.get(group.getName())) {
-                    int currentScore = tests[testId].getPoints().intValue();
+                    int currentScore = tests.get(testId).getPoints().intValue();
                     score += currentScore;
                     minScore = Math.min(minScore, currentScore);
                     maxScore = Math.max(maxScore, currentScore);
