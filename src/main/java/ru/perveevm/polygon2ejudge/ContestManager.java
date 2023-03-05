@@ -144,6 +144,7 @@ public class ContestManager {
         NodeList allTestsElement = testsElement.getElementsByTagName("tests");
         for (int i = 0; i < allTestsElement.getLength(); i++) {
             org.w3c.dom.Element testElement = (org.w3c.dom.Element) allTestsElement.item(i);
+            System.out.println(testElement);
             TestInformation test = new TestInformation();
             if (testElement.hasAttribute("points")) {
                 test.setPoints(Double.parseDouble(testElement.getAttribute("points")));
