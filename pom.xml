@@ -24,7 +24,7 @@
         <dependency>
             <groupId>com.github.perveevm</groupId>
             <artifactId>polygon-api</artifactId>
-            <version>80412fc</version>
+            <version>ef34211</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/net.lingala.zip4j/zip4j -->
