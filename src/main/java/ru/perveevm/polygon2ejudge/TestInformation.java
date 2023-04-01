@@ -1,5 +1,8 @@
 package ru.perveevm.polygon2ejudge;
 
+/**
+ * @author Mike Perveev (perveev_m@mail.ru)
+ */
 public class TestInformation {
     private Double points;
     private String group;

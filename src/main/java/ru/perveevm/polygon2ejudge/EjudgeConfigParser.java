@@ -10,6 +10,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author Mike Perveev (perveev_m@mail.ru)
+ */
 public class EjudgeConfigParser {
     private String prefix;
     private final List<String> problems = new ArrayList<>();

@@ -9,7 +9,6 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 import ru.perveevm.polygon2ejudge.exceptions.EjudgeSessionException;
 
 import java.io.IOException;
@@ -21,6 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+/**
+ * @author Mike Perveev (perveev_m@mail.ru)
+ */
 public class EjudgeSession {
     private final String login;
     private final String password;

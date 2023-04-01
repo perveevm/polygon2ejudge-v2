@@ -7,6 +7,9 @@ import ru.perveevm.polygon2ejudge.exceptions.EjudgeSessionException;
 
 import java.util.concurrent.Callable;
 
+/**
+ * @author Mike Perveev (perveev_m@mail.ru)
+ */
 @CommandLine.Command(name = "polygon2ejudge")
 public class Commands implements Callable<Integer> {
     @CommandLine.Command(name = "ic", description = "Import contest from Polygon to ejudge")

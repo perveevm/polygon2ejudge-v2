@@ -8,7 +8,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Entities;
 import org.jsoup.select.Elements;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import ru.perveevm.polygon.api.PolygonSession;
@@ -34,12 +33,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * @author Mike Perveev (perveev_m@mail.ru)
+ */
 public class ContestManager {
     private final Logger log;
     private final PolygonSession session;
@@ -139,6 +140,7 @@ public class ContestManager {
         org.w3c.dom.Document document = builder.parse(configPath.toFile());
         document.getDocumentElement().normalize();
 
+        log.info("Parsing tests...");
         org.w3c.dom.Element testsElement = (org.w3c.dom.Element) document.getElementsByTagName("tests").item(0);
         List<TestInformation> tests = new ArrayList<>();
         NodeList allTestsElement = testsElement.getElementsByTagName("test");
@@ -537,7 +539,7 @@ public class ContestManager {
         Path contestDirectory = contestsDir.resolve(String.format("%06d", ejudgeContestId));
         log.info(String.format("Removing contest %s", contestDirectory));
 
-        Path problemsDirectory = contestsDir.resolve("problems");
+        Path problemsDirectory = contestDirectory.resolve("problems");
         if (Files.exists(problemsDirectory)) {
             try {
                 FileUtils.deleteDirectory(problemsDirectory.toFile());

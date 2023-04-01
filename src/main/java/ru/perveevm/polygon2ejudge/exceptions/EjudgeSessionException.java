@@ -1,5 +1,8 @@
 package ru.perveevm.polygon2ejudge.exceptions;
 
+/**
+ * @author Mike Perveev (perveev_m@mail.ru)
+ */
 public class EjudgeSessionException extends Exception {
     public EjudgeSessionException(final String message) {
         super("Error happened while interacting with ejudge: " + message);
