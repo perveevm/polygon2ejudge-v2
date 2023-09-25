@@ -29,6 +29,23 @@ public class Commands implements Callable<Integer> {
         }
     }
 
+    @CommandLine.Command(name = "rp", description = "Remove one problem from ejudge contest")
+    public Integer removeProblem(
+            @CommandLine.Parameters(index = "0", description = "Ejudge contest ID") final int ejudgeContestId,
+            @CommandLine.Parameters(index = "1", description = "Problem ID in contest") final int problemId,
+            @CommandLine.Option(names = {"-h", "--help"}, usageHelp = true, description = "Display this help message")
+            boolean usageHelpRequested) {
+        try {
+            ContestManager manager = new ContestManager();
+            manager.removeProblem(ejudgeContestId, problemId);
+            return 0;
+        } catch (ContestManagerException e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+            return 1;
+        }
+    }
+
     @CommandLine.Command(name = "rc", description = "Remove all problems from ejudge contest")
     public Integer removeContest(
             @CommandLine.Parameters(index = "0", description = "Ejudge contest ID") final int ejudgeContestId,

@@ -535,10 +535,39 @@ public class ContestManager {
         }
     }
 
+    public void removeProblem(final int ejudgeContestId, final int problemId) throws ContestManagerException {
+        Path contestDirectory = contestsDir.resolve(String.format("%06d", ejudgeContestId));
+        log.info(String.format("Removing problem %d from contest %s", problemId, contestDirectory));
+
+        log.info("Getting problem internal name");
+        EjudgeConfigParser parser = new EjudgeConfigParser();
+        try {
+            parser.parse(contestDirectory.resolve("conf").resolve("serve.cfg"));
+        } catch (IOException e) {
+            throw new ContestManagerException("failed to parse serve.cfg", e);
+        }
+
+        String internalName = parser.getProblemInternalNameById(problemId);
+
+        log.info("Cleaning serve.cfg");
+        parser.removeProblemById(problemId);
+
+        log.info(String.format("Removing \"%s\" directory", internalName));
+        Path problemsDirectory = contestDirectory.resolve("problems");
+        if (Files.exists(problemsDirectory.resolve(internalName))) {
+            try {
+                FileUtils.deleteDirectory(problemsDirectory.resolve(internalName).toFile());
+            } catch (IOException e) {
+                throw new ContestManagerException("failed to delete problem directory", e);
+            }
+        }
+    }
+
     public void removeContest(final int ejudgeContestId) throws ContestManagerException {
         Path contestDirectory = contestsDir.resolve(String.format("%06d", ejudgeContestId));
         log.info(String.format("Removing contest %s", contestDirectory));
 
+        log.info("Removing \"problems\" directory");
         Path problemsDirectory = contestDirectory.resolve("problems");
         if (Files.exists(problemsDirectory)) {
             try {
@@ -581,6 +610,7 @@ public class ContestManager {
         Path problemsDirectory = contestDirectory.resolve("problems");
         try (Stream<Path> stream = Files.list(problemsDirectory)) {
             stream.forEach(problemPath -> {
+                log.info(String.format("Submitting solutions for problem %s", problemPath.getFileName().toString()));
                 Path solutionsPath = problemPath.resolve("solutions");
                 try (Stream<Path> solutionsStream = Files.list(solutionsPath)) {
                     solutionsStream
