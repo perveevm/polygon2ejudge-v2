@@ -62,8 +62,26 @@ public class Commands implements Callable<Integer> {
         }
     }
 
+    @CommandLine.Command(name = "sp",
+            description = "Submit all problem solutions to ejudge. Only C++, Python, Java ans Pascal are supported")
+    public Integer submitProblem(
+            @CommandLine.Parameters(index = "0", description = "Ejudge contest ID") final int ejudgeContestId,
+            @CommandLine.Parameters(index = "1", description = "Problem ID") final int problemId,
+            @CommandLine.Option(names = {"-h", "--help"}, usageHelp = true, description = "Display this help message")
+            boolean usageHelpRequested) {
+        try {
+            ContestManager manager = new ContestManager();
+            manager.submitProblem(ejudgeContestId, problemId);
+            return 0;
+        } catch (ContestManagerException | EjudgeSessionException e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+            return 1;
+        }
+    }
+
     @CommandLine.Command(name = "sc",
-            description = "Submit all solutions to ejudge. Only C++, Python, Java and Pascal are supported")
+            description = "Submit all contest solutions to ejudge. Only C++, Python, Java and Pascal are supported")
     public Integer submitContest(
             @CommandLine.Parameters(index = "0", description = "Ejudge contest ID") final int ejudgeContestId,
             @CommandLine.Option(names = {"-h", "--help"}, usageHelp = true, description = "Display this help message")

@@ -595,6 +595,51 @@ public class ContestManager {
         }
     }
 
+    public void submitProblem(final int ejudgeContestId, final int problemId)
+            throws EjudgeSessionException, ContestManagerException {
+        EjudgeSession ejudgeSession = new EjudgeSession();
+        Path contestDirectory = contestsDir.resolve(String.format("%06d", ejudgeContestId));
+        log.info(String.format("Submitting all runs for contest %d and problem %d", ejudgeContestId, problemId));
+
+        EjudgeConfigParser parser = new EjudgeConfigParser();
+        try {
+            parser.parse(contestDirectory.resolve("conf").resolve("serve.cfg"));
+        } catch (IOException e) {
+            throw new ContestManagerException("failed to parse serve.cfg", e);
+        }
+        String internalName = parser.getProblemInternalNameById(problemId);
+        Path problemsDirectory = contestDirectory.resolve("problems");
+        Path problemPath = problemsDirectory.resolve(internalName);
+        Path solutionsPath = problemPath.resolve("solutions");
+        try (Stream<Path> solutionsStream = Files.list(solutionsPath)) {
+            solutionsStream
+                    .map(Path::getFileName)
+                    .map(Path::toString)
+                    .map(filename -> filename.split("\\."))
+                    .filter(parts -> parts.length == 2)
+                    .forEach(parts -> {
+                        String source;
+                        Path solutionPath = solutionsPath.resolve(String.join(".", parts));
+                        try (BufferedReader reader = Files.newBufferedReader(solutionPath, StandardCharsets.UTF_8)) {
+                            source = reader.lines().collect(Collectors.joining(System.lineSeparator()));
+                        } catch (IOException e) {
+                            log.warning("Could not read solution file");
+                            return;
+                        }
+
+                        try {
+                            ejudgeSession.submitSolution(ejudgeContestId, source, problemId, parts[1]);
+                        } catch (EjudgeSessionException e) {
+                            log.warning(String.format("Could not read solution file %s",
+                                    String.join(".", parts)));
+                        }
+                    });
+        } catch (IOException e) {
+            log.warning(String.format("Failed to iterate over solutions of problem %s",
+                    problemPath.getFileName()));
+        }
+    }
+
     public void submitContest(final int ejudgeContestId) throws EjudgeSessionException, ContestManagerException {
         EjudgeSession ejudgeSession = new EjudgeSession();
         Path contestDirectory = contestsDir.resolve(String.format("%06d", ejudgeContestId));
@@ -609,46 +654,12 @@ public class ContestManager {
 
         Path problemsDirectory = contestDirectory.resolve("problems");
         try (Stream<Path> stream = Files.list(problemsDirectory)) {
-            stream.forEach(problemPath -> {
-                log.info(String.format("Submitting solutions for problem %s", problemPath.getFileName().toString()));
-                Path solutionsPath = problemPath.resolve("solutions");
-                try (Stream<Path> solutionsStream = Files.list(solutionsPath)) {
-                    solutionsStream
-                            .map(Path::getFileName)
-                            .map(Path::toString)
-                            .map(filename -> filename.split("\\."))
-                            .filter(parts -> parts.length == 2)
-                            .forEach(parts -> {
-                                String source;
-                                Path solutionPath = solutionsPath.resolve(String.join(".", parts));
-                                try (BufferedReader reader = Files.newBufferedReader(solutionPath, StandardCharsets.UTF_8)) {
-                                    source = reader.lines().collect(Collectors.joining(System.lineSeparator()));
-                                } catch (IOException e) {
-                                    log.warning("Could not read solution file");
-                                    return;
-                                }
-
-                                int problemId;
-                                try {
-                                    problemId = parser.getProblemIdByInternalName(problemPath.getFileName().toString());
-                                } catch (ContestManagerException e) {
-                                    log.warning(String.format("Could not find problem id for problem %s",
-                                            problemPath.getFileName().toString()));
-                                    return;
-                                }
-
-                                try {
-                                    ejudgeSession.submitSolution(ejudgeContestId, source, problemId, parts[1]);
-                                } catch (EjudgeSessionException e) {
-                                    log.warning(String.format("Could not read solution file %s",
-                                            String.join(".", parts)));
-                                }
-                            });
-                } catch (IOException e) {
-                    log.warning(String.format("Failed to iterate over solutions of problem %s",
-                            problemPath.getFileName()));
-                }
-            });
+            List<Path> problemPaths = stream.toList();
+            for (Path problemPath : problemPaths) {
+                String internalName = problemPath.getFileName().toString();
+                int problemId = parser.getProblemIdByInternalName(internalName);
+                submitProblem(ejudgeContestId, problemId);
+            }
         } catch (IOException e) {
             throw new EjudgeSessionException("failed to iterate the problems", e);
         }
