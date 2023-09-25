@@ -55,10 +55,6 @@ public class EjudgeConfigParser {
         }
     }
 
-    public String getPrefix() {
-        return prefix;
-    }
-
     public List<String> getProblems() {
         return problems;
     }
