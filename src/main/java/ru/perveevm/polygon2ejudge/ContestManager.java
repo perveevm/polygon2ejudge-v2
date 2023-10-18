@@ -373,6 +373,7 @@ public class ContestManager {
             Document document = Jsoup.parse(statementPath.toFile());
             document.outputSettings().syntax(Document.OutputSettings.Syntax.xml);
             document.outputSettings().escapeMode(Entities.EscapeMode.xhtml);
+            document.outputSettings().indentAmount(0).prettyPrint(false);
             Elements legendElements = document.getElementsByClass("problem-statement");
             if (!legendElements.isEmpty()) {
                 Element legendElement = legendElements.get(0);
